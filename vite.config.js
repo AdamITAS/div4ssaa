@@ -3,9 +3,9 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
-  preview: {
-    port: 4173,
-    host: true,
-    allowedHosts: ['all'],
-  }
+ "scripts": {
+  "dev": "vite",
+  "build": "vite build",
+  "preview": "vite preview --host 0.0.0.0 --allowed-hosts all"
+},
 })
