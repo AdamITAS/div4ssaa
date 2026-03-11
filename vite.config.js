@@ -6,6 +6,6 @@ export default defineConfig({
  "scripts": {
   "dev": "vite",
   "build": "vite build",
-  "preview": "vite preview --host 0.0.0.0 --allowed-hosts all"
+  "preview": "vite preview --host --port $PORT"
 },
 })
