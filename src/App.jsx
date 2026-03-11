@@ -1,351 +1,795 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 if (!document.querySelector('#d4-fonts')) {
   const l = document.createElement('link');
-  l.id = 'd4-fonts';
-  l.rel = 'stylesheet';
-  l.href = 'https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap';
+  l.id = 'd4-fonts'; l.rel = 'stylesheet';
+  l.href = 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,600;0,700;1,600&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap';
   document.head.appendChild(l);
 }
-if (!document.querySelector('#d4-style')) {
+
+if (!document.querySelector('#d4-css')) {
   const s = document.createElement('style');
-  s.id = 'd4-style';
+  s.id = 'd4-css';
   s.textContent = `
-    @keyframes fadeUp { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:none; } }
-    @keyframes leafSway { 0%,100% { transform: rotate(-2deg); } 50% { transform: rotate(2deg); } }
-    .leaf-icon { animation: leafSway 3s ease-in-out infinite; transform-origin: bottom center; }
-    .team-card:hover { transform: translateY(-3px) !important; box-shadow: 0 8px 24px rgba(0,0,0,0.1) !important; }
-    * { box-sizing: border-box; }
-    ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-thumb { background: #c4b8a8; border-radius: 4px; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { background: #faf7f2; color: #1c1c1a; font-family: 'DM Sans', sans-serif; }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-thumb { background: #c4a882; border-radius: 4px; }
+
+    @keyframes fadeUp   { from { opacity:0; transform:translateY(24px); } to { opacity:1; transform:none; } }
+    @keyframes fadeIn   { from { opacity:0; } to { opacity:1; } }
+    @keyframes reveal   { from { opacity:0; letter-spacing:0.5em; filter:blur(8px); } to { opacity:1; letter-spacing:-0.01em; filter:blur(0); } }
+    @keyframes leafSway { 0%,100%{transform:rotate(-4deg);}50%{transform:rotate(4deg);} }
+    @keyframes barGrow  { from { width:0; } to { width:var(--w); } }
+    @keyframes slideIn  { from { opacity:0; transform:translateX(-20px); } to { opacity:1; transform:none; } }
+
+    .leaf { animation: leafSway 4s ease-in-out infinite; transform-origin: bottom center; display:inline-block; }
+
+    .nav-link {
+      font-size: 13px; color: #6b6560; text-decoration: none; font-weight: 500;
+      transition: color 0.2s; cursor: pointer; background: none; border: none; font-family: 'DM Sans', sans-serif;
+    }
+    .nav-link:hover, .nav-link.active { color: #2d4a2d; }
+
+    .btn-primary {
+      background: #2d4a2d; color: white; border: none; border-radius: 8px;
+      padding: 13px 28px; font-size: 14px; font-weight: 600; cursor: pointer;
+      font-family: 'DM Sans', sans-serif; transition: all 0.2s; letter-spacing: 0.3px;
+    }
+    .btn-primary:hover { background: #1e3320; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(45,74,45,0.25); }
+
+    .btn-outline {
+      background: transparent; color: #2d4a2d; border: 1.5px solid #2d4a2d; border-radius: 8px;
+      padding: 12px 26px; font-size: 14px; font-weight: 600; cursor: pointer;
+      font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+    }
+    .btn-outline:hover { background: #2d4a2d; color: white; }
+
+    .section-fade { opacity: 0; transform: translateY(30px); transition: opacity 0.7s ease, transform 0.7s ease; }
+    .section-fade.visible { opacity: 1; transform: none; }
+
+    .member-row:hover { background: #f0ebe0 !important; }
+    .member-row:hover .member-arrow { opacity: 1 !important; transform: translateX(4px) !important; }
+
+    .prod-card { transition: transform 0.25s, box-shadow 0.25s; }
+    .prod-card:hover { transform: translateY(-5px); box-shadow: 0 16px 48px rgba(0,0,0,0.10) !important; }
+
+    .filter-btn { transition: all 0.2s; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+    .filter-btn:hover { border-color: #2d4a2d !important; color: #2d4a2d !important; }
+
+    @media (max-width: 768px) {
+      .hero-flex { flex-direction: column !important; text-align: center; }
+      .hero-img { display: none !important; }
+      .stats-row { grid-template-columns: repeat(2, 1fr) !important; }
+      .prod-grid { grid-template-columns: repeat(2, 1fr) !important; }
+      .fin-grid { grid-template-columns: 1fr !important; }
+      .anni-grid { grid-template-columns: repeat(3, 1fr) !important; }
+      .team-dept-label { display: none !important; }
+    }
+    @media (max-width: 480px) {
+      .prod-grid { grid-template-columns: 1fr !important; }
+    }
   `;
   document.head.appendChild(s);
 }
 
-const C = {
-  bg: '#f5f0e8', dark: '#1a1a14', green: '#2d4a2d',
-  accent: '#b8603a', muted: '#8a8278', card: '#ffffff',
-  border: '#e4ddd2', softGreen: '#e8f0e8',
-};
+const GREEN = '#2d4a2d';
+const ACCENT = '#b8603a';
+const GOLD = '#c4a882';
+const MUTED = '#6b6560';
+const BORDER = '#e8e0d5';
+const CARD = '#ffffff';
+const BG = '#faf7f2';
+const SOFT = '#f0ebe0';
 
 const DEPT_COLORS = {
-  "Direzione": "#b8603a", "Tech": "#3a6eb8", "Creativo": "#8b3ab8",
-  "Marketing": "#2980b9", "Vendite": "#c0892a", "Qualità": "#27ae60",
-  "Operazioni": "#c0392b", "HR": "#16a085",
+  "Direzione":  { bg: '#fdf0ea', text: '#b8603a', dot: '#b8603a' },
+  "Tech":       { bg: '#eaf0fd', text: '#2d5fb8', dot: '#2d5fb8' },
+  "Creativo":   { bg: '#f4eafd', text: '#7b3ab8', dot: '#7b3ab8' },
+  "Marketing":  { bg: '#eaf4fd', text: '#2980b9', dot: '#2980b9' },
+  "Vendite":    { bg: '#fdf6ea', text: '#c07a20', dot: '#c07a20' },
+  "Qualità":    { bg: '#eafdf0', text: '#1e8a40', dot: '#1e8a40' },
+  "Operazioni": { bg: '#fdeaea', text: '#b83030', dot: '#b83030' },
+  "HR":         { bg: '#eafaf7', text: '#0f8a70', dot: '#0f8a70' },
 };
 
 const TEAM = [
-  { name: "Laura", role: "CEO & Amministratrice", dept: "Direzione" },
-  { name: "Maria", role: "CFO – Resp. Finanziario", dept: "Direzione" },
-  { name: "Adam", role: "Web Developer & IT", dept: "Tech" },
-  { name: "Mia", role: "Graphic Designer – Brand", dept: "Creativo" },
-  { name: "Erika", role: "Graphic Designer – Logo", dept: "Creativo" },
-  { name: "Sara", role: "Marketing Manager", dept: "Marketing" },
-  { name: "Giorgia", role: "Social Media Manager", dept: "Marketing" },
-  { name: "Giulia", role: "PR & Comunicazione", dept: "Marketing" },
-  { name: "Alessandra", role: "Brand & Influencer", dept: "Marketing" },
-  { name: "Sofia", role: "Sales Manager", dept: "Vendite" },
-  { name: "Zoe", role: "Customer Service", dept: "Vendite" },
-  { name: "Nicole", role: "Qualità & Certificazioni", dept: "Qualità" },
-  { name: "Anita", role: "Logistica & Supply Chain", dept: "Operazioni" },
-  { name: "Leonardo", role: "Resp. Produzione", dept: "Operazioni" },
-  { name: "Lara", role: "HR Manager", dept: "HR" },
+  { name:"Laura",       role:"Amministratrice Delegata",   dept:"Direzione",  quota:2000 },
+  { name:"Maria",       role:"Responsabile Finanziario",   dept:"Direzione",  quota:2000 },
+  { name:"Adam",        role:"Sviluppatore Web & IT",      dept:"Tech",       quota:2000 },
+  { name:"Mia",         role:"Graphic Designer – Brand",   dept:"Creativo",   quota:2000 },
+  { name:"Erika",       role:"Graphic Designer – Logo",    dept:"Creativo",   quota:2000 },
+  { name:"Sara",        role:"Marketing Manager",          dept:"Marketing",  quota:2000 },
+  { name:"Giorgia",     role:"Social Media Manager",       dept:"Marketing",  quota:2000 },
+  { name:"Giulia",      role:"PR & Comunicazione",         dept:"Marketing",  quota:2000 },
+  { name:"Alessandra",  role:"Brand & Influencer",         dept:"Marketing",  quota:2000 },
+  { name:"Sofia",       role:"Responsabile Vendite",       dept:"Vendite",    quota:2000 },
+  { name:"Zoe",         role:"Assistenza Clienti",         dept:"Vendite",    quota:2000 },
+  { name:"Nicole",      role:"Qualità & Certificazioni",   dept:"Qualità",    quota:2000 },
+  { name:"Anita",       role:"Logistica & Supply Chain",   dept:"Operazioni", quota:2000 },
+  { name:"Leonardo",    role:"Responsabile Produzione",    dept:"Operazioni", quota:2000 },
+  { name:"Lara",        role:"Gestione Risorse Umane",     dept:"HR",         quota:2000 },
+];
+
+const PRODOTTI = [
+  { emoji:"💄", nome:"VelvetLip",  cat:"Labbra",  prezzo:14.90, tag:"Best Seller", tagCol:"#b8603a",
+    desc:"Rossetto vegano a texture vellutata. Idrata e colora in un gesto solo, tenuta fino a 8 ore senza trasferimento." },
+  { emoji:"🌿", nome:"GreenBase", cat:"Viso",    prezzo:22.50, tag:"Novità",      tagCol:"#2d4a2d",
+    desc:"Fondotinta leggero a base di aloe vera biologica. Copertura naturale e uniforme con SPF 15 incluso." },
+  { emoji:"✨", nome:"GlowSerum", cat:"Skincare", prezzo:28.00, tag:"Top",         tagCol:"#7b3ab8",
+    desc:"Siero illuminante con vitamina C e acido ialuronico. Riduce le imperfezioni, luminosità visibile dalla prima settimana." },
+  { emoji:"👁️",nome:"PureLiner", cat:"Occhi",   prezzo:11.90, tag:null,          tagCol:null,
+    desc:"Eyeliner waterproof a punta fine. Tratto preciso e intenso, asciugatura in 30 secondi." },
+  { emoji:"🌸", nome:"BlushBio",  cat:"Viso",    prezzo:16.00, tag:null,          tagCol:null,
+    desc:"Blush in polvere compatta con pigmenti naturali. Dona un incarnato fresco e sano, texture ultra-sfumabile." },
+  { emoji:"🧴", nome:"SoftMask",  cat:"Skincare", prezzo:19.90, tag:"Esclusivo",  tagCol:"#2980b9",
+    desc:"Maschera viso all'argilla rosa e olio di rosa canina. Purifica i pori e nutre la pelle in soli 10 minuti." },
+  { emoji:"💅", nome:"NaturNail", cat:"Unghie",  prezzo:8.90,  tag:null,          tagCol:null,
+    desc:"Smalto 5-free privo di sostanze nocive. Asciugatura rapida, 18 colori disponibili." },
+  { emoji:"🌙", nome:"NightCream",cat:"Skincare", prezzo:24.50, tag:"Promo",      tagCol:"#e67e22",
+    desc:"Crema notte rigenerante con burro di karité e retinolo vegetale. Pelle morbida al risveglio." },
 ];
 
 const USCITE = [
-  { label: "Stipendi (300€ × 15)", value: 4500 },
-  { label: "Prodotti & materie prime", value: 2500 },
-  { label: "Affitto sede", value: 800 },
-  { label: "Marketing & ADV", value: 600 },
-  { label: "Packaging cruelty-free", value: 500 },
-  { label: "Certificazioni (rata)", value: 150 },
-  { label: "Hosting & Tech (Railway)", value: 50 },
-  { label: "Spese varie", value: 400 },
+  { label:"Stipendi (€300 × 15 soci)",  v:4500 },
+  { label:"Prodotti & materie prime",    v:2500 },
+  { label:"Affitto sede operativa",      v:800  },
+  { label:"Marketing & pubblicità",      v:600  },
+  { label:"Packaging cruelty-free",      v:500  },
+  { label:"Certificazioni (rata mese)",  v:150  },
+  { label:"Hosting & infrastruttura",    v:50   },
+  { label:"Spese generali",             v:400  },
 ];
-const TOT_USCITE = USCITE.reduce((a, b) => a + b.value, 0);
+const TOT_USCITE = USCITE.reduce((a,b) => a+b.v, 0);
 const RATA = 1547;
 
-function LeafSVG({ size = 32, color = C.green }) {
+// ── Utilities ──────────────────────────────────────────────────────────────
+
+function useInView(ref) {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) setVisible(true); }, { threshold: 0.12 });
+    if (ref.current) obs.observe(ref.current);
+    return () => obs.disconnect();
+  }, []);
+  return visible;
+}
+
+function Section({ id, children, style = {} }) {
+  const ref = useRef(null);
+  const visible = useInView(ref);
   return (
-    <svg className="leaf-icon" width={size} height={size} viewBox="0 0 32 32" fill="none">
+    <section id={id} ref={ref} className={`section-fade${visible?' visible':''}`}
+      style={{ padding:'80px 0', ...style }}>
+      {children}
+    </section>
+  );
+}
+
+function Container({ children, style = {} }) {
+  return <div style={{ maxWidth:1100, margin:'0 auto', padding:'0 24px', ...style }}>{children}</div>;
+}
+
+function SectionLabel({ children }) {
+  return (
+    <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:12 }}>
+      <div style={{ width:28, height:2, background:GREEN, borderRadius:2 }}/>
+      <span style={{ fontSize:11, fontWeight:600, letterSpacing:3, textTransform:'uppercase', color:GREEN }}>{children}</span>
+    </div>
+  );
+}
+
+function SectionTitle({ children, style={} }) {
+  return (
+    <h2 style={{
+      fontFamily:"'Cormorant Garamond',serif",
+      fontSize:'clamp(32px,5vw,52px)',
+      fontWeight:600, lineHeight:1.1,
+      color:'#1c1c1a', ...style,
+    }}>{children}</h2>
+  );
+}
+
+function LeafSVG({ size=32, color=GREEN }) {
+  return (
+    <svg className="leaf" width={size} height={size} viewBox="0 0 32 32" fill="none">
       <path d="M16 2C16 2,27 10,27 20c0 5.5-4.9 9-11 9S5 25.5,5 20C5 10,16 2,16 2Z" fill={color}/>
-      <line x1="16" y1="29" x2="16" y2="14" stroke={C.bg} strokeWidth="1.4"/>
-      <line x1="16" y1="18" x2="21" y2="13" stroke={C.bg} strokeWidth="1"/>
-      <line x1="16" y1="24" x2="11" y2="19" stroke={C.bg} strokeWidth="1"/>
+      <line x1="16" y1="29" x2="16" y2="14" stroke={BG} strokeWidth="1.4"/>
+      <line x1="16" y1="18" x2="21" y2="13" stroke={BG} strokeWidth="1"/>
+      <line x1="16" y1="24" x2="11" y2="19" stroke={BG} strokeWidth="1"/>
     </svg>
   );
 }
 
-function LogoBlock({ scale = 1 }) {
+// ── Componenti ─────────────────────────────────────────────────────────────
+
+function Navbar({ active }) {
+  const links = [
+    { id:'chi-siamo', label:'Chi siamo' },
+    { id:'team',      label:'Team' },
+    { id:'prodotti',  label:'Prodotti' },
+    { id:'finanza',   label:'Finanza' },
+  ];
+  const scrollTo = id => document.getElementById(id)?.scrollIntoView({ behavior:'smooth' });
+
   return (
-    <div style={{ display:'flex', alignItems:'center', gap: 10*scale }}>
-      <LeafSVG size={36*scale} />
-      <div>
-        <div style={{ fontFamily:"'Playfair Display',serif", fontSize: 26*scale, fontWeight:700, color:C.dark, lineHeight:1, letterSpacing:-0.5 }}>
-          DIV<span style={{color:C.accent}}>4</span>SSAA
-        </div>
-        <div style={{ fontFamily:"'DM Sans',sans-serif", fontSize: 9*scale, fontWeight:300, color:C.muted, letterSpacing:3, textTransform:'uppercase', marginTop:2 }}>
-          SNC · Cruelty Free
+    <nav style={{
+      position:'fixed', top:0, left:0, right:0, zIndex:100,
+      background:'rgba(250,247,242,0.92)', backdropFilter:'blur(14px)',
+      borderBottom:`1px solid ${BORDER}`,
+      padding:'0 24px', height:60,
+      display:'flex', alignItems:'center', justifyContent:'space-between',
+    }}>
+      <div style={{ display:'flex', alignItems:'center', gap:10, cursor:'pointer' }}
+        onClick={() => window.scrollTo({ top:0, behavior:'smooth' })}>
+        <LeafSVG size={26}/>
+        <div>
+          <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:20, fontWeight:700, letterSpacing:-0.3 }}>
+            DIV<span style={{color:ACCENT}}>4</span>SSAA
+          </span>
+          <span style={{ fontSize:9, color:MUTED, letterSpacing:2, textTransform:'uppercase', marginLeft:8 }}>snc</span>
         </div>
       </div>
+      <div style={{ display:'flex', alignItems:'center', gap:28 }}>
+        {links.map(l => (
+          <button key={l.id} className={`nav-link${active===l.id?' active':''}`}
+            onClick={() => scrollTo(l.id)}>{l.label}</button>
+        ))}
+      </div>
+    </nav>
+  );
+}
+
+function Hero() {
+  const [show, setShow] = useState(false);
+  useEffect(() => { const t = setTimeout(() => setShow(true), 100); return () => clearTimeout(t); }, []);
+  return (
+    <div style={{
+      minHeight:'100vh', display:'flex', alignItems:'center',
+      background:`linear-gradient(160deg, #f0ebe0 0%, ${BG} 60%)`,
+      paddingTop:60,
+    }}>
+      <Container>
+        <div className="hero-flex" style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:40 }}>
+          <div style={{ maxWidth:600, opacity:show?1:0, transform:show?'none':'translateY(30px)', transition:'all 1s ease' }}>
+            <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:24 }}>
+              <LeafSVG size={20}/>
+              <span style={{ fontSize:11, fontWeight:600, letterSpacing:3, textTransform:'uppercase', color:GREEN }}>
+                Società in Nome Collettivo
+              </span>
+            </div>
+            <h1 style={{
+              fontFamily:"'Cormorant Garamond',serif",
+              fontSize:'clamp(42px,7vw,80px)',
+              fontWeight:600, lineHeight:1.05, letterSpacing:'-0.01em',
+              marginBottom:24,
+            }}>
+              Bellezza<br/>
+              <span style={{ color:ACCENT, fontStyle:'italic' }}>senza compromessi.</span>
+            </h1>
+            <p style={{ fontSize:16, color:MUTED, lineHeight:1.8, maxWidth:460, marginBottom:36 }}>
+              DIV4SSAA è un progetto di 15 giovani fondatori che credono in una cosmetica etica,
+              cruelty-free e accessibile a tutti.
+            </p>
+            <div style={{ display:'flex', gap:12, flexWrap:'wrap' }}>
+              <button className="btn-primary" onClick={() => document.getElementById('prodotti')?.scrollIntoView({behavior:'smooth'})}>
+                Scopri i prodotti
+              </button>
+              <button className="btn-outline" onClick={() => document.getElementById('chi-siamo')?.scrollIntoView({behavior:'smooth'})}>
+                Chi siamo
+              </button>
+            </div>
+          </div>
+
+          {/* Decorazione destra */}
+          <div className="hero-img" style={{
+            width:360, height:360, flexShrink:0, position:'relative',
+            opacity:show?1:0, transition:'opacity 1.2s ease 0.4s',
+          }}>
+            <div style={{
+              width:'100%', height:'100%', borderRadius:'40% 60% 60% 40% / 50% 40% 60% 50%',
+              background:`linear-gradient(135deg, #e8f0e8, #fdf0ea)`,
+              display:'flex', alignItems:'center', justifyContent:'center', fontSize:120,
+            }}>🌿</div>
+            {[
+              { top:10,  right:20,  emoji:'💄', size:52 },
+              { top:60,  left:-10,  emoji:'✨', size:44 },
+              { bottom:30, right:0, emoji:'🌸', size:48 },
+              { bottom:60, left:20, emoji:'💅', size:40 },
+            ].map((b,i) => (
+              <div key={i} style={{
+                position:'absolute', top:b.top, right:b.right, bottom:b.bottom, left:b.left,
+                width:b.size+16, height:b.size+16,
+                background:CARD, borderRadius:14, boxShadow:'0 4px 16px rgba(0,0,0,0.08)',
+                display:'flex', alignItems:'center', justifyContent:'center', fontSize:b.size*0.7,
+                animation:`fadeIn 0.6s ease ${0.6+i*0.15}s both`,
+              }}>{b.emoji}</div>
+            ))}
+          </div>
+        </div>
+
+        {/* Stats */}
+        <div className="stats-row" style={{
+          display:'grid', gridTemplateColumns:'repeat(4,1fr)',
+          gap:1, marginTop:60,
+          background:BORDER, borderRadius:16, overflow:'hidden',
+          opacity:show?1:0, transition:'opacity 0.8s ease 0.8s',
+        }}>
+          {[
+            { val:'15',      label:'Soci fondatori' },
+            { val:'€30.000', label:'Capitale sociale' },
+            { val:'8',       label:'Prodotti a catalogo' },
+            { val:'100%',    label:'Cruelty-Free' },
+          ].map((s,i) => (
+            <div key={i} style={{ background:CARD, padding:'24px 20px', textAlign:'center' }}>
+              <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:32, fontWeight:700, color:GREEN, marginBottom:4 }}>
+                {s.val}
+              </div>
+              <div style={{ fontSize:12, color:MUTED }}>{s.label}</div>
+            </div>
+          ))}
+        </div>
+      </Container>
     </div>
   );
 }
 
-function Tag({ children, color }) {
+function ChiSiamo() {
   return (
-    <span style={{ display:'inline-block', background: color+'20', color, fontSize:10, fontWeight:600,
-      padding:'2px 8px', borderRadius:20, letterSpacing:0.5, textTransform:'uppercase' }}>
-      {children}
-    </span>
+    <Section id="chi-siamo" style={{ background:SOFT }}>
+      <Container>
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:60, alignItems:'center' }}>
+          <div>
+            <SectionLabel>Chi siamo</SectionLabel>
+            <SectionTitle style={{ marginBottom:24 }}>
+              Un'idea nata<br/>
+              <span style={{ color:ACCENT, fontStyle:'italic' }}>in classe.</span>
+            </SectionTitle>
+            <p style={{ fontSize:15, color:MUTED, lineHeight:1.9, marginBottom:16 }}>
+              DIV4SSAA snc nasce dalla 4ª SSAA, un gruppo di 15 studenti dell'indirizzo
+              socio-sanitario che hanno deciso di trasformare una simulazione d'impresa in
+              qualcosa di vero.
+            </p>
+            <p style={{ fontSize:15, color:MUTED, lineHeight:1.9 }}>
+              Il nostro oggetto sociale è la vendita di cosmetici e trucchi non testati su animali,
+              perché crediamo che la bellezza non debba mai avere un costo etico.
+            </p>
+          </div>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14 }}>
+            {[
+              { icon:'🌿', title:'Cruelty-Free',      desc:'Nessun test su animali, mai.' },
+              { icon:'♻️', title:'Sostenibile',        desc:'Packaging eco-compatibile e ridotto.' },
+              { icon:'💎', title:'Qualità',            desc:'Ingredienti selezionati e certificati.' },
+              { icon:'🤝', title:'Trasparenza',        desc:'15 soci, un progetto condiviso.' },
+            ].map((v,i) => (
+              <div key={i} style={{
+                background:CARD, borderRadius:14, padding:'20px 16px',
+                boxShadow:'0 1px 8px rgba(0,0,0,0.05)',
+              }}>
+                <div style={{ fontSize:28, marginBottom:10 }}>{v.icon}</div>
+                <div style={{ fontWeight:600, fontSize:14, marginBottom:6 }}>{v.title}</div>
+                <div style={{ fontSize:12, color:MUTED, lineHeight:1.5 }}>{v.desc}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Dati societari */}
+        <div style={{
+          marginTop:60, background:GREEN, borderRadius:20, padding:'32px 40px',
+          display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(160px,1fr))', gap:32,
+        }}>
+          {[
+            { label:'Forma giuridica',    val:'SNC' },
+            { label:'Ragione sociale',    val:'DIV4SSAA snc' },
+            { label:'Numero soci',        val:'15' },
+            { label:'Conferimento p/c',   val:'€2.000' },
+            { label:'Capitale totale',    val:'€30.000' },
+            { label:'Sede',               val:'Classe 4ª SSAA' },
+          ].map((r,i) => (
+            <div key={i}>
+              <div style={{ fontSize:10, color:'rgba(255,255,255,0.5)', letterSpacing:2, textTransform:'uppercase', marginBottom:6 }}>{r.label}</div>
+              <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:20, fontWeight:600, color:'white' }}>{r.val}</div>
+            </div>
+          ))}
+        </div>
+      </Container>
+    </Section>
   );
 }
 
-function Card({ children, style = {} }) {
+function Team() {
+  const depts = [...new Set(TEAM.map(m => m.dept))];
+  const [activeFilter, setActiveFilter] = useState('Tutti');
+  const filtered = activeFilter === 'Tutti' ? TEAM : TEAM.filter(m => m.dept === activeFilter);
+
   return (
-    <div style={{ background:C.card, borderRadius:14, padding:20,
-      boxShadow:'0 1px 10px rgba(0,0,0,0.06)', ...style }}>
-      {children}
-    </div>
+    <Section id="team">
+      <Container>
+        <div style={{ display:'flex', alignItems:'flex-end', justifyContent:'space-between', flexWrap:'wrap', gap:20, marginBottom:40 }}>
+          <div>
+            <SectionLabel>Il team</SectionLabel>
+            <SectionTitle>15 soci,<br/><span style={{color:ACCENT,fontStyle:'italic'}}>15 ruoli.</span></SectionTitle>
+          </div>
+          <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+            {['Tutti',...depts].map(d => {
+              const col = d === 'Tutti' ? GREEN : DEPT_COLORS[d]?.dot;
+              const active = activeFilter === d;
+              return (
+                <button key={d} className="filter-btn" onClick={() => setActiveFilter(d)} style={{
+                  padding:'6px 14px', borderRadius:20, fontSize:12, fontWeight:500,
+                  border:`1.5px solid ${active ? col : BORDER}`,
+                  background: active ? col : 'transparent',
+                  color: active ? 'white' : MUTED,
+                }}>{d}</button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Tabella team */}
+        <div style={{ background:CARD, borderRadius:16, overflow:'hidden', boxShadow:'0 2px 16px rgba(0,0,0,0.06)' }}>
+          {/* Header tabella */}
+          <div style={{
+            display:'grid', gridTemplateColumns:'1fr 2fr 1fr 1fr',
+            padding:'12px 24px', background:SOFT,
+            borderBottom:`1px solid ${BORDER}`,
+          }}>
+            {['Nome','Ruolo','Dipartimento','Stipendio'].map((h,i) => (
+              <span key={i} style={{ fontSize:10, fontWeight:600, letterSpacing:2, textTransform:'uppercase', color:MUTED,
+                ...(i===2 ? {className:'team-dept-label'} : {}) }}>{h}</span>
+            ))}
+          </div>
+
+          {filtered.map((m, i) => {
+            const dc = DEPT_COLORS[m.dept];
+            const initials = m.name.slice(0,2).toUpperCase();
+            return (
+              <div key={m.name} className="member-row" style={{
+                display:'grid', gridTemplateColumns:'1fr 2fr 1fr 1fr',
+                padding:'16px 24px', alignItems:'center',
+                borderBottom: i < filtered.length-1 ? `1px solid ${BORDER}` : 'none',
+                background: CARD,
+                transition:'background 0.2s',
+                animation:`slideIn 0.4s ease ${i*0.04}s both`,
+              }}>
+                {/* Nome + avatar */}
+                <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+                  <div style={{
+                    width:36, height:36, borderRadius:10,
+                    background:dc.bg, border:`1px solid ${dc.dot}30`,
+                    display:'flex', alignItems:'center', justifyContent:'center',
+                    fontFamily:"'Cormorant Garamond',serif",
+                    fontSize:15, fontWeight:700, color:dc.dot,
+                    flexShrink:0,
+                  }}>{initials}</div>
+                  <span style={{ fontWeight:600, fontSize:15 }}>{m.name}</span>
+                </div>
+                {/* Ruolo */}
+                <span style={{ fontSize:13, color:MUTED }}>{m.role}</span>
+                {/* Dept badge */}
+                <div className="team-dept-label">
+                  <span style={{
+                    display:'inline-block',
+                    background:dc.bg, color:dc.text,
+                    fontSize:10, fontWeight:600, letterSpacing:1,
+                    padding:'3px 10px', borderRadius:20, textTransform:'uppercase',
+                  }}>{m.dept}</span>
+                </div>
+                {/* Stipendio + arrow */}
+                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                  <span style={{ fontSize:13, fontWeight:600, color:GREEN }}>€300/mese</span>
+                  <span className="member-arrow" style={{ color:MUTED, opacity:0, transition:'all 0.2s' }}>→</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <div style={{ marginTop:16, fontSize:12, color:MUTED, textAlign:'right' }}>
+          Quota capitale: €2.000 a socio · Totale conferimenti: €30.000
+        </div>
+      </Container>
+    </Section>
   );
 }
+
+function Prodotti() {
+  const cats = ['Tutti', ...new Set(PRODOTTI.map(p => p.cat))];
+  const [filter, setFilter] = useState('Tutti');
+  const list = filter === 'Tutti' ? PRODOTTI : PRODOTTI.filter(p => p.cat === filter);
+
+  return (
+    <Section id="prodotti" style={{ background:SOFT }}>
+      <Container>
+        <div style={{ marginBottom:40 }}>
+          <SectionLabel>Catalogo</SectionLabel>
+          <div style={{ display:'flex', alignItems:'flex-end', justifyContent:'space-between', flexWrap:'wrap', gap:16 }}>
+            <SectionTitle>I nostri<br/><span style={{color:ACCENT,fontStyle:'italic'}}>prodotti.</span></SectionTitle>
+            <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+              {cats.map(c => (
+                <button key={c} className="filter-btn" onClick={() => setFilter(c)} style={{
+                  padding:'7px 16px', borderRadius:20, fontSize:12, fontWeight:500,
+                  border:`1.5px solid ${filter===c ? GREEN : BORDER}`,
+                  background: filter===c ? GREEN : CARD,
+                  color: filter===c ? 'white' : MUTED,
+                }}>{c}</button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="prod-grid" style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(230px,1fr))', gap:16 }}>
+          {list.map((p,i) => (
+            <div key={p.nome} className="prod-card" style={{
+              background:CARD, borderRadius:16, overflow:'hidden',
+              boxShadow:'0 2px 12px rgba(0,0,0,0.06)',
+              animation:`fadeUp 0.5s ease ${i*0.07}s both`,
+            }}>
+              <div style={{
+                height:140,
+                background:`linear-gradient(135deg, #e8f0e8, #fdf0ea)`,
+                display:'flex', alignItems:'center', justifyContent:'center',
+                fontSize:56, position:'relative',
+              }}>
+                {p.emoji}
+                {p.tag && (
+                  <div style={{
+                    position:'absolute', top:10, right:10,
+                    background:p.tagCol, color:'white',
+                    fontSize:9, fontWeight:700, letterSpacing:1, textTransform:'uppercase',
+                    padding:'3px 10px', borderRadius:20,
+                  }}>{p.tag}</div>
+                )}
+              </div>
+              <div style={{ padding:'16px' }}>
+                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:8 }}>
+                  <div>
+                    <div style={{ fontWeight:700, fontSize:16, marginBottom:2 }}>{p.nome}</div>
+                    <div style={{ fontSize:10, color:MUTED, letterSpacing:1.5, textTransform:'uppercase' }}>{p.cat}</div>
+                  </div>
+                  <div style={{
+                    fontFamily:"'Cormorant Garamond',serif",
+                    fontSize:22, fontWeight:700, color:ACCENT, flexShrink:0, marginLeft:8,
+                  }}>€{p.prezzo.toFixed(2)}</div>
+                </div>
+                <p style={{ fontSize:12, color:MUTED, lineHeight:1.65 }}>{p.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Container>
+    </Section>
+  );
+}
+
+function Finanza() {
+  const ref = useRef(null);
+  const visible = useInView(ref);
+
+  return (
+    <Section id="finanza">
+      <Container>
+        <div style={{ marginBottom:48 }}>
+          <SectionLabel>Situazione finanziaria</SectionLabel>
+          <SectionTitle>Numeri<br/><span style={{color:ACCENT,fontStyle:'italic'}}>reali.</span></SectionTitle>
+        </div>
+
+        {/* KPI */}
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(200px,1fr))', gap:14, marginBottom:32 }}>
+          {[
+            { label:'Capitale Sociale',  val:'€30.000', sub:'2.000€ × 15 soci',       col:GREEN,   icon:'💰' },
+            { label:'Debito Bancario',   val:'€80.000', sub:'Finanziamento iniziale',  col:'#c0392b',icon:'📋' },
+            { label:'Rata Mensile',      val:'€1.547',  sub:'Piano 5 anni · tasso 6%', col:'#e67e22',icon:'📅' },
+            { label:'Stipendio/Socio',   val:'€300/m',  sub:'+ quota capitale €2k',    col:ACCENT,  icon:'👤' },
+          ].map((k,i) => (
+            <div key={i} style={{
+              background:CARD, borderRadius:16, padding:'24px 20px',
+              boxShadow:'0 2px 12px rgba(0,0,0,0.05)',
+              borderLeft:`3px solid ${k.col}`,
+            }}>
+              <div style={{ fontSize:22, marginBottom:10 }}>{k.icon}</div>
+              <div style={{ fontSize:10, color:MUTED, letterSpacing:2, textTransform:'uppercase', marginBottom:8 }}>{k.label}</div>
+              <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:30, fontWeight:700, color:k.col, lineHeight:1 }}>{k.val}</div>
+              <div style={{ fontSize:11, color:MUTED, marginTop:6 }}>{k.sub}</div>
+            </div>
+          ))}
+        </div>
+
+        <div className="fin-grid" style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:20, marginBottom:20 }}>
+          {/* Uscite */}
+          <div style={{ background:CARD, borderRadius:16, padding:28, boxShadow:'0 2px 12px rgba(0,0,0,0.05)' }}>
+            <h3 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:26, fontWeight:600, marginBottom:20 }}>
+              Uscite mensili
+            </h3>
+            {USCITE.map((u,i) => (
+              <div key={i} style={{
+                display:'flex', justifyContent:'space-between', alignItems:'center',
+                padding:'9px 0', borderBottom:i<USCITE.length-1?`1px solid ${BORDER}`:'none',
+              }}>
+                <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                  <div style={{ width:3, height:16, background:GOLD, borderRadius:2, flexShrink:0 }}/>
+                  <span style={{ fontSize:13, color:MUTED }}>{u.label}</span>
+                </div>
+                <span style={{ fontSize:13, fontWeight:500 }}>€{u.v.toLocaleString('it')}</span>
+              </div>
+            ))}
+            <div style={{ display:'flex', justifyContent:'space-between', paddingTop:14, marginTop:4, fontWeight:700 }}>
+              <span>Totale</span>
+              <span style={{ color:'#c0392b', fontFamily:"'Cormorant Garamond',serif", fontSize:22 }}>
+                €{TOT_USCITE.toLocaleString('it')}
+              </span>
+            </div>
+            <div style={{ fontSize:11, color:MUTED, marginTop:6 }}>
+              Con rata debito → €{(TOT_USCITE+RATA).toLocaleString('it')}/mese
+            </div>
+          </div>
+
+          {/* Target */}
+          <div style={{ background:CARD, borderRadius:16, padding:28, boxShadow:'0 2px 12px rgba(0,0,0,0.05)' }}>
+            <h3 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:26, fontWeight:600, marginBottom:20 }}>
+              Obiettivi fatturato
+            </h3>
+            {[
+              { label:'Anno 1 – Avvio',          val:12000, col:'#3a6eb8' },
+              { label:'Anno 2 – Crescita',        val:18000, col:ACCENT },
+              { label:'Anno 3 – Consolidamento',  val:25000, col:GREEN },
+            ].map((t,i) => {
+              const net = t.val-TOT_USCITE-RATA;
+              const perc = Math.min(100, Math.round((t.val/(TOT_USCITE+RATA))*100));
+              return (
+                <div key={i} style={{ marginBottom:18 }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', marginBottom:6 }}>
+                    <span style={{ fontSize:13, color:MUTED }}>{t.label}</span>
+                    <span style={{ fontWeight:700, color:t.col, fontSize:14 }}>€{t.val.toLocaleString('it')}/m</span>
+                  </div>
+                  <div style={{ height:6, background:SOFT, borderRadius:4, marginBottom:6, overflow:'hidden' }}>
+                    <div style={{
+                      height:'100%', borderRadius:4, background:t.col,
+                      width:visible?`${perc}%`:'0%',
+                      transition:`width 1.2s cubic-bezier(0.34,1.56,0.64,1) ${i*0.25}s`,
+                    }}/>
+                  </div>
+                  <div style={{ fontSize:11, color:MUTED }}>
+                    Margine netto:&nbsp;
+                    <span style={{ fontWeight:600, color:net>=0?GREEN:'#c0392b' }}>
+                      {net>=0?'+':''}€{net.toLocaleString('it')}/mese
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+            <div style={{ padding:'12px 14px', background:'#e8f0e8', borderRadius:10, fontSize:13, color:GREEN, fontWeight:600 }}>
+              🎯 Break-even: €{(TOT_USCITE+RATA).toLocaleString('it')}/mese
+            </div>
+          </div>
+        </div>
+
+        {/* Piano rimborso */}
+        <div ref={ref} style={{ background:CARD, borderRadius:16, padding:28, boxShadow:'0 2px 12px rgba(0,0,0,0.05)' }}>
+          <h3 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:26, fontWeight:600, marginBottom:28 }}>
+            Piano rimborso debito – 5 anni
+          </h3>
+          <div className="anni-grid" style={{ display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:12, alignItems:'end' }}>
+            {[1,2,3,4,5].map(anno => {
+              const pagato = RATA*12*anno;
+              const perc = Math.min(100, (pagato/80000)*100);
+              const rimasto = Math.max(0, 80000-pagato);
+              return (
+                <div key={anno} style={{ textAlign:'center' }}>
+                  <div style={{ fontSize:11, color:MUTED, marginBottom:10, fontWeight:500, letterSpacing:0.5 }}>Anno {anno}</div>
+                  <div style={{ height:120, background:SOFT, borderRadius:10, position:'relative', overflow:'hidden' }}>
+                    <div style={{
+                      position:'absolute', bottom:0, left:0, right:0,
+                      height:visible?`${perc}%`:'0%',
+                      background:`linear-gradient(to top,${GREEN},${GREEN}80)`,
+                      transition:`height 1.4s cubic-bezier(0.34,1.56,0.64,1) ${anno*0.15}s`,
+                      borderRadius:'0 0 8px 8px',
+                    }}/>
+                    <div style={{
+                      position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center',
+                      fontWeight:700, fontSize:14,
+                      color:perc>50?'white':MUTED,
+                    }}>{Math.round(perc)}%</div>
+                  </div>
+                  <div style={{ fontSize:11, fontWeight:600, marginTop:8, color:rimasto===0?GREEN:ACCENT }}>
+                    {rimasto===0?'✅ Saldato':`€${Math.round(rimasto/1000)}k rim.`}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <div style={{ marginTop:20, textAlign:'center', fontSize:12, color:MUTED }}>
+            €1.547/mese × 60 mesi =&nbsp;
+            <strong style={{ color:GREEN }}>€92.820 totale rimborsato</strong> (inclusi interessi ~tasso 6%)
+          </div>
+        </div>
+      </Container>
+    </Section>
+  );
+}
+
+function Footer() {
+  return (
+    <footer style={{ background:GREEN, color:'rgba(255,255,255,0.85)', padding:'40px 24px' }}>
+      <Container>
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:20 }}>
+          <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+            <LeafSVG size={24} color="rgba(255,255,255,0.9)"/>
+            <div>
+              <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:20, fontWeight:600, color:'white' }}>
+                DIV4SSAA snc
+              </div>
+              <div style={{ fontSize:10, letterSpacing:2, opacity:0.5, textTransform:'uppercase' }}>Cruelty-Free Since 2025</div>
+            </div>
+          </div>
+          <div style={{ fontSize:12, opacity:0.5, textAlign:'right' }}>
+            Sito sviluppato da Adam · Hosting Railway<br/>
+            Logo in sviluppo — Mia & Erika
+          </div>
+        </div>
+      </Container>
+    </footer>
+  );
+}
+
+// ── App principale ──────────────────────────────────────────────────────────
 
 export default function App() {
-  const [phase, setPhase] = useState(0);
-  const [tab, setTab] = useState('team');
+  const [activeNav, setActiveNav] = useState('');
+  const [introVisible, setIntroVisible] = useState(true);
 
   useEffect(() => {
-    const t = setTimeout(() => setPhase(1), 2400);
+    const t = setTimeout(() => setIntroVisible(false), 2400);
     return () => clearTimeout(t);
   }, []);
 
-  return (
-    <div style={{ background: C.bg, minHeight:'100vh', fontFamily:"'DM Sans',sans-serif", color:C.dark }}>
+  useEffect(() => {
+    const sections = ['chi-siamo','team','prodotti','finanza'];
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) setActiveNav(e.target.id); });
+    }, { threshold:0.3 });
+    sections.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) obs.observe(el);
+    });
+    return () => obs.disconnect();
+  }, [introVisible]);
 
-      {/* ── INTRO OVERLAY ── */}
+  return (
+    <>
+      {/* Intro */}
       <div style={{
-        position:'fixed', inset:0, zIndex:100, background:C.bg,
+        position:'fixed', inset:0, zIndex:200,
+        background:`radial-gradient(ellipse at center, #ede5d0, ${BG})`,
         display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',
-        opacity: phase===0 ? 1 : 0, pointerEvents: phase===0 ? 'all' : 'none',
+        opacity:introVisible?1:0, pointerEvents:introVisible?'all':'none',
         transition:'opacity 1s ease',
       }}>
-        <div style={{ animation:'fadeUp 0.8s ease both' }}>
-          <LogoBlock scale={2} />
+        <LeafSVG size={64}/>
+        <div style={{
+          fontFamily:"'Cormorant Garamond',serif",
+          fontSize:'clamp(52px,12vw,96px)', fontWeight:600,
+          color:'#1c1c1a', marginTop:16,
+          animation:'reveal 1.6s cubic-bezier(0.16,1,0.3,1) 0.3s both',
+        }}>
+          DIV<span style={{color:ACCENT}}>4</span>SSAA
         </div>
-        <div style={{ marginTop:28, fontSize:12, color:C.muted, letterSpacing:3, textTransform:'uppercase', animation:'fadeUp 0.8s ease 0.3s both' }}>
-          Piano Aziendale · 2025
+        <div style={{ fontSize:11, letterSpacing:4, color:MUTED, textTransform:'uppercase', marginTop:10, animation:'fadeIn 1s ease 1s both' }}>
+          Cosmetici Cruelty-Free · SNC
         </div>
       </div>
 
-      {/* ── CORNER LOGO (fixed) ── */}
-      <div style={{
-        position:'fixed', top:14, left:14, zIndex:50,
-        opacity: phase===1 ? 1 : 0, transition:'opacity 0.8s ease 0.6s',
-        background: C.bg+'dd', backdropFilter:'blur(10px)',
-        padding:'8px 14px', borderRadius:10,
-        boxShadow:'0 2px 14px rgba(0,0,0,0.09)',
-      }}>
-        <LogoBlock scale={0.55} />
+      <div style={{ opacity:introVisible?0:1, transition:'opacity 0.6s ease' }}>
+        <Navbar active={activeNav}/>
+        <Hero/>
+        <ChiSiamo/>
+        <Team/>
+        <Prodotti/>
+        <Finanza/>
+        <Footer/>
       </div>
-
-      {/* ── MAIN ── */}
-      <div style={{
-        maxWidth:980, margin:'0 auto', padding:'72px 16px 48px',
-        opacity: phase===1 ? 1 : 0, transition:'opacity 0.6s ease 1s',
-      }}>
-
-        {/* Title */}
-        <div style={{ textAlign:'center', marginBottom:36 }}>
-          <h1 style={{ fontFamily:"'Playfair Display',serif", fontSize:'clamp(26px,5vw,44px)', fontWeight:700, marginBottom:6 }}>
-            Piano Aziendale
-          </h1>
-          <p style={{ color:C.muted, fontSize:13 }}>DIV4SSAA snc · 15 soci fondatori · Cruelty-Free Cosmetics</p>
-        </div>
-
-        {/* Tabs */}
-        <div style={{ display:'flex', justifyContent:'center', marginBottom:28 }}>
-          <div style={{ display:'flex', gap:3, background:C.border, padding:4, borderRadius:12 }}>
-            {[{id:'team',label:'👥 Team'},{id:'finanza',label:'💰 Finanza'},{id:'info',label:'📋 Azienda'}].map(t=>(
-              <button key={t.id} onClick={()=>setTab(t.id)} style={{
-                padding:'8px 18px', borderRadius:9, border:'none', cursor:'pointer',
-                fontSize:13, fontWeight:500, fontFamily:"'DM Sans',sans-serif",
-                background: tab===t.id ? C.card : 'transparent',
-                color: tab===t.id ? C.dark : C.muted,
-                boxShadow: tab===t.id ? '0 1px 6px rgba(0,0,0,0.1)' : 'none',
-                transition:'all 0.2s',
-              }}>{t.label}</button>
-            ))}
-          </div>
-        </div>
-
-        {/* ── TEAM ── */}
-        {tab==='team' && (
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(190px,1fr))', gap:12 }}>
-            {TEAM.map((p,i)=>(
-              <div key={i} className="team-card" style={{
-                background:C.card, borderRadius:12, padding:16,
-                borderLeft:`3px solid ${DEPT_COLORS[p.dept]}`,
-                boxShadow:'0 1px 8px rgba(0,0,0,0.05)',
-                transition:'all 0.25s ease', cursor:'default',
-              }}>
-                <div style={{marginBottom:8}}><Tag color={DEPT_COLORS[p.dept]}>{p.dept}</Tag></div>
-                <div style={{fontWeight:600, fontSize:16, marginBottom:2}}>{p.name}</div>
-                <div style={{color:C.muted, fontSize:12, lineHeight:1.4}}>{p.role}</div>
-                <div style={{marginTop:10, paddingTop:10, borderTop:`1px solid ${C.border}`, display:'flex', justifyContent:'space-between', fontSize:11}}>
-                  <span style={{color:C.green, fontWeight:600}}>€300/mese</span>
-                  <span style={{color:C.muted}}>quota €2k</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* ── FINANZA ── */}
-        {tab==='finanza' && (
-          <div>
-            {/* KPI top */}
-            <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(150px,1fr))', gap:12, marginBottom:20}}>
-              {[
-                {label:'Capitale Sociale', val:'€30.000', sub:'2.000€ × 15 soci', col:C.green},
-                {label:'Debito Bancario', val:'€80.000', sub:'Finanziamento iniziale', col:'#c0392b'},
-                {label:'Rata Mensile', val:'€1.547', sub:'5 anni · tasso 6%', col:'#c0392b'},
-                {label:'Stipendio/Socio', val:'€300/m', sub:'+ quota capitale €2k', col:C.accent},
-              ].map((k,i)=>(
-                <Card key={i} style={{borderTop:`3px solid ${k.col}`, padding:'14px 16px'}}>
-                  <div style={{fontSize:10, color:C.muted, textTransform:'uppercase', letterSpacing:1, marginBottom:6}}>{k.label}</div>
-                  <div style={{fontFamily:"'Playfair Display',serif", fontSize:22, fontWeight:700, color:k.col}}>{k.val}</div>
-                  <div style={{fontSize:11, color:C.muted, marginTop:3}}>{k.sub}</div>
-                </Card>
-              ))}
-            </div>
-
-            <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(270px,1fr))', gap:16, marginBottom:16}}>
-              {/* Uscite */}
-              <Card>
-                <h3 style={{fontSize:15, fontWeight:600, marginBottom:14}}>📤 Uscite Mensili</h3>
-                {USCITE.map((item,i)=>(
-                  <div key={i} style={{display:'flex', justifyContent:'space-between', padding:'7px 0',
-                    borderBottom: i<USCITE.length-1 ? `1px solid ${C.border}` : 'none', fontSize:13}}>
-                    <span style={{color:C.muted}}>{item.label}</span>
-                    <span style={{fontWeight:500}}>€{item.value.toLocaleString('it')}</span>
-                  </div>
-                ))}
-                <div style={{display:'flex', justifyContent:'space-between', paddingTop:10, marginTop:4, fontWeight:700, fontSize:15, color:'#c0392b'}}>
-                  <span>Totale uscite</span><span>€{TOT_USCITE.toLocaleString('it')}</span>
-                </div>
-                <div style={{fontSize:11, color:C.muted, marginTop:4}}>
-                  Con rata debito → €{(TOT_USCITE+RATA).toLocaleString('it')}/mese
-                </div>
-              </Card>
-
-              {/* Target fatturato */}
-              <Card>
-                <h3 style={{fontSize:15, fontWeight:600, marginBottom:14}}>📈 Target Fatturato</h3>
-                {[
-                  {label:'Anno 1', val:12000},
-                  {label:'Anno 2', val:18000},
-                  {label:'Anno 3', val:25000},
-                ].map((t,i)=>{
-                  const net = t.val - TOT_USCITE - RATA;
-                  return (
-                    <div key={i} style={{background:C.bg, borderRadius:8, padding:'10px 12px', marginBottom:8}}>
-                      <div style={{display:'flex', justifyContent:'space-between', marginBottom:3}}>
-                        <span style={{fontWeight:600, fontSize:14}}>{t.label}</span>
-                        <span style={{fontWeight:700, color:C.green}}>€{t.val.toLocaleString('it')}/m</span>
-                      </div>
-                      <div style={{fontSize:12, color:C.muted}}>
-                        Margine netto:&nbsp;
-                        <span style={{color: net>=0 ? C.green : '#c0392b', fontWeight:600}}>
-                          {net>=0?'+':''}€{net.toLocaleString('it')}/mese
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-                <div style={{marginTop:10, padding:'9px 12px', background:C.softGreen, borderRadius:8, fontSize:12, color:C.green, fontWeight:600}}>
-                  🎯 Break-even: €{(TOT_USCITE+RATA).toLocaleString('it')}/mese
-                </div>
-              </Card>
-            </div>
-
-            {/* Piano rimborso debito */}
-            <Card>
-              <h3 style={{fontSize:15, fontWeight:600, marginBottom:16}}>📅 Piano Rimborso Debito — 5 Anni</h3>
-              <div style={{display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:10}}>
-                {[1,2,3,4,5].map(anno=>{
-                  const pagato = RATA*12*anno;
-                  const perc = Math.min(100, (pagato/80000)*100);
-                  const rimasto = Math.max(0, 80000-pagato);
-                  return (
-                    <div key={anno} style={{textAlign:'center'}}>
-                      <div style={{fontSize:11, color:C.muted, marginBottom:8, fontWeight:500}}>Anno {anno}</div>
-                      <div style={{height:90, background:C.border, borderRadius:6, position:'relative', overflow:'hidden'}}>
-                        <div style={{
-                          position:'absolute', bottom:0, left:0, right:0,
-                          height:`${perc}%`,
-                          background:`linear-gradient(to top, ${C.green}, ${C.green}99)`,
-                          transition:'height 1.2s ease', borderRadius:'0 0 4px 4px',
-                        }}/>
-                        <div style={{position:'absolute', top:'50%', left:0, right:0, transform:'translateY(-50%)', color:perc>45?'white':C.muted, fontSize:11, fontWeight:700}}>
-                          {Math.round(perc)}%
-                        </div>
-                      </div>
-                      <div style={{fontSize:10, color:rimasto===0?C.green:C.accent, fontWeight:600, marginTop:5}}>
-                        {rimasto===0 ? '✅ SALDATO' : `€${Math.round(rimasto/1000)}k`}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-              <div style={{marginTop:12, fontSize:12, color:C.muted, textAlign:'center'}}>
-                €1.547/mese × 60 mesi = €92.820 totale rimborsato (incl. interessi)
-              </div>
-            </Card>
-          </div>
-        )}
-
-        {/* ── INFO ── */}
-        {tab==='info' && (
-          <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(270px,1fr))', gap:16}}>
-            {[
-              {title:'🏢 Dati Societari', rows:[
-                ['Forma giuridica','SNC – Soc. in Nome Collettivo'],
-                ['Ragione sociale','DIV4SSAA snc'],
-                ['N° soci','15'],
-                ['Conferimento p/c','€2.000 a socio'],
-                ['Capitale totale','€30.000'],
-                ['Debito iniziale','€80.000'],
-              ]},
-              {title:'🌿 Oggetto Sociale', rows:[
-                ['Settore','Cosmetica & Beauty'],
-                ['Specializzazione','Trucchi cruelty-free'],
-                ['Certificazione target','Leaping Bunny / PETA'],
-                ['Target cliente','18–35 anni, eco-conscious'],
-                ['Canali vendita','E-commerce + Social'],
-                ['Distribuzione','Online-first'],
-              ]},
-              {title:'💻 Struttura Tech', rows:[
-                ['Sito web','Adam (Web Dev)'],
-                ['Hosting','Railway'],
-                ['Logo & Brand','Mia & Erika'],
-                ['Social Media','Giorgia'],
-                ['Framework','In definizione'],
-                ['Stato','🟡 In sviluppo'],
-              ]},
-            ].map((sec,i)=>(
-              <Card key={i}>
-                <h3 style={{fontSize:15, fontWeight:600, marginBottom:14}}>{sec.title}</h3>
-                {sec.rows.map(([label,val],j)=>(
-                  <div key={j} style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start',
-                    padding:'7px 0', borderBottom: j<sec.rows.length-1?`1px solid ${C.border}`:'none', gap:8}}>
-                    <span style={{color:C.muted, fontSize:12, flexShrink:0}}>{label}</span>
-                    <span style={{fontWeight:500, fontSize:12, textAlign:'right'}}>{val}</span>
-                  </div>
-                ))}
-              </Card>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
+    </>
   );
 }
