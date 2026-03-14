@@ -384,13 +384,14 @@ export default function Chatbot() {
         </div>
       </div>
 
-      {/* FAB */}
+      {/* FAB — nascosto su mobile quando chat è aperta */}
       <button onClick={() => setOpen(o => !o)} style={{
         position:'fixed', bottom: isMobile ? 20 : 24, right: isMobile ? 20 : 24,
         width:56, height:56, borderRadius:'50%',
         background: open ? '#1e3320' : GREEN, border:'none', cursor:'pointer',
         boxShadow:'0 4px 20px rgba(45,74,45,0.4)',
-        display:'flex', alignItems:'center', justifyContent:'center',
+        display: isMobile && open ? 'none' : 'flex',
+        alignItems:'center', justifyContent:'center',
         fontSize:22, zIndex:1001, transition:'all 0.25s ease',
       }}>
         {open ? '✕' : '💬'}
