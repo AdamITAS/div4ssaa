@@ -775,7 +775,7 @@ export default function App() {
         opacity:introVisible?1:0, pointerEvents:introVisible?'all':'none',
         transition:'opacity 1s ease',
       }}>
-        <LogoMark size={80}/>
+        <LogoMark size={210}/>
         <div style={{
           fontFamily:"'Cormorant Garamond',serif",
           fontSize:'clamp(52px,12vw,96px)', fontWeight:600,
