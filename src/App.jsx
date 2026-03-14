@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import Chatbot from "./Chatbot";
 
 if (!document.querySelector('#d4-fonts')) {
   const l = document.createElement('link');
@@ -140,15 +141,16 @@ const PRODOTTI = [
     desc:"Crema notte rigenerante con burro di karité e retinolo vegetale. Pelle morbida al risveglio." },
 ];
 
+// MODIFICA 1: stipendi aggiornati a €750
 const USCITE = [
-  { label:"Stipendi (€300 × 15 soci)", v:4500 },
-  { label:"Prodotti & materie prime",   v:2500 },
-  { label:"Affitto sede operativa",     v:800  },
-  { label:"Marketing & pubblicità",     v:600  },
-  { label:"Packaging cruelty-free",     v:500  },
-  { label:"Certificazioni (rata mese)", v:150  },
-  { label:"Hosting & infrastruttura",   v:50   },
-  { label:"Spese generali",            v:400  },
+  { label:"Stipendi (€750 × 15 soci)", v:11250 },
+  { label:"Prodotti & materie prime",   v:2500  },
+  { label:"Affitto sede operativa",     v:800   },
+  { label:"Marketing & pubblicità",     v:600   },
+  { label:"Packaging cruelty-free",     v:500   },
+  { label:"Certificazioni (rata mese)", v:150   },
+  { label:"Hosting & infrastruttura",   v:50    },
+  { label:"Spese generali",            v:400   },
 ];
 const TOT_USCITE = USCITE.reduce((a,b) => a+b.v, 0);
 const RATA = 1547;
@@ -176,7 +178,6 @@ function Section({ id, children, style={} }) {
   );
 }
 
-// Container con maxWidth grande per TV, padding laterale proporzionale
 function Container({ children, style={} }) {
   return (
     <div style={{
@@ -208,7 +209,6 @@ function SectionTitle({ children, style={} }) {
   );
 }
 
-// Logo: usa logo.png se esiste, altrimenti SVG foglia
 function LogoMark({ size=32 }) {
   const [hasPng, setHasPng] = useState(true);
   return hasPng
@@ -365,7 +365,6 @@ function ChiSiamo() {
   return (
     <Section id="chi-siamo" style={{ background:SOFT }}>
       <Container>
-        {/* Due colonne → 1 su mobile */}
         <div className="chi-grid" style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:60, alignItems:'start' }}>
           <div>
             <SectionLabel>Chi siamo</SectionLabel>
@@ -373,7 +372,6 @@ function ChiSiamo() {
               Un'idea nata<br/>
               <span style={{ color:ACCENT, fontStyle:'italic' }}>in classe.</span>
             </SectionTitle>
-            {/* Testo più corto e diretto */}
             <p style={{ fontSize:14, color:MUTED, lineHeight:1.8, marginBottom:12 }}>
               Siamo la <strong style={{color:'#1c1c1a'}}>4ª SSAA</strong>, 15 studenti dell'indirizzo socio-sanitario che hanno trasformato una simulazione d'impresa in un brand reale.
             </p>
@@ -381,7 +379,6 @@ function ChiSiamo() {
               Vendiamo cosmetici e trucchi <strong style={{color:GREEN}}>non testati su animali</strong>: perché la bellezza non dovrebbe avere un costo etico.
             </p>
 
-            {/* Valori — griglia 2x2 */}
             <div className="chi-values" style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginTop:28 }}>
               {[
                 { icon:'🌿', title:'Cruelty-Free',  desc:'Zero test su animali.' },
@@ -401,7 +398,6 @@ function ChiSiamo() {
             </div>
           </div>
 
-          {/* Dati societari verticali */}
           <div style={{ background:GREEN, borderRadius:20, padding:'32px 28px' }} className="dati-box">
             <div style={{ fontSize:11, color:'rgba(255,255,255,0.5)', letterSpacing:3, textTransform:'uppercase', marginBottom:24 }}>
               Dati societari
@@ -500,7 +496,8 @@ function Team() {
                   }}>{m.dept}</span>
                 </div>
                 <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-                  <span style={{ fontSize:13, fontWeight:600, color:GREEN }}>€300/mese</span>
+                  {/* MODIFICA 2: stipendio €750/mese */}
+                  <span style={{ fontSize:13, fontWeight:600, color:GREEN }}>€750/mese</span>
                   <span className="member-arrow" style={{ color:MUTED, opacity:0, transition:'all 0.2s' }}>→</span>
                 </div>
               </div>
@@ -601,10 +598,11 @@ function Finanza() {
 
         <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(200px,1fr))', gap:14, marginBottom:28 }}>
           {[
-            { label:'Capitale Sociale', val:'€30.000', sub:'2.000€ × 15 soci',      col:GREEN,      icon:'💰' },
-            { label:'Debito Bancario',  val:'€80.000', sub:'Finanziamento iniziale', col:'#c0392b',   icon:'📋' },
-            { label:'Rata Mensile',     val:'€1.547',  sub:'Piano 5 anni · tasso 6%',col:'#e67e22',   icon:'📅' },
-            { label:'Stipendio/Socio',  val:'€300/m',  sub:'+ quota capitale €2k',   col:ACCENT,     icon:'👤' },
+            { label:'Capitale Sociale', val:'€30.000', sub:'2.000€ × 15 soci',      col:GREEN,     icon:'💰' },
+            { label:'Debito Bancario',  val:'€80.000', sub:'Finanziamento iniziale', col:'#c0392b',  icon:'📋' },
+            { label:'Rata Mensile',     val:'€1.547',  sub:'Piano 5 anni · tasso 6%',col:'#e67e22',  icon:'📅' },
+            // MODIFICA 3: KPI stipendio aggiornato
+            { label:'Stipendio/Socio',  val:'€750/m',  sub:'+ quota capitale €2k',   col:ACCENT,    icon:'👤' },
           ].map((k,i) => (
             <div key={i} style={{
               background:CARD, borderRadius:16, padding:'22px 20px',
@@ -647,9 +645,9 @@ function Finanza() {
           <div style={{ background:CARD, borderRadius:16, padding:28, boxShadow:'0 2px 12px rgba(0,0,0,0.05)' }}>
             <h3 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:24, fontWeight:600, marginBottom:20 }}>Obiettivi fatturato</h3>
             {[
-              { label:'Anno 1 – Avvio',         val:12000, col:'#3a6eb8' },
-              { label:'Anno 2 – Crescita',       val:18000, col:ACCENT },
-              { label:'Anno 3 – Consolidamento', val:25000, col:GREEN },
+              { label:'Anno 1 – Avvio',         val:20000, col:'#3a6eb8' },
+              { label:'Anno 2 – Crescita',       val:30000, col:ACCENT },
+              { label:'Anno 3 – Consolidamento', val:45000, col:GREEN },
             ].map((t,i) => {
               const net  = t.val-TOT_USCITE-RATA;
               const perc = Math.min(100, Math.round((t.val/(TOT_USCITE+RATA))*100));
@@ -799,6 +797,8 @@ export default function App() {
         <Prodotti/>
         <Finanza/>
         <Footer/>
+        {/* MODIFICA 4: Chatbot aggiunto */}
+        <Chatbot/>
       </div>
     </>
   );
